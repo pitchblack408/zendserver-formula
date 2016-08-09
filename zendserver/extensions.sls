@@ -31,9 +31,13 @@ zendserver.disable_extensions:
 
 # If and extension was changed, we restart as a precaution. Most extensions requre a restart to be activated.
 {% if must_restart_zend %}
-zendserver.restart_because_extension_mutation:
- cmd.run:
-    - name: /usr/local/zend/bin/zs-manage restart -N admin -K {{ zend_api_key }}
+restart-zs:
+  cmd.run:
+    - name: "/etc/zendserver/restart.sh admin {{ zend_api_key }}"
+    - stateful: True
+#zendserver.restart_because_extension_mutation:
+# cmd.run:
+#    - name: /usr/local/zend/bin/zs-manage restart -N admin -K {{ zend_api_key }}
 {% endif %}
 
 {% endif %}

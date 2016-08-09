@@ -1,13 +1,13 @@
 # Example settings for zendserver.
 zendserver:
   # Admin password to login to the ZendServer Dashboard
-  admin_password: saltyzend
+  admin_password: password
 
   # Which versions to use for Zend Server & PHP.
   version:
-    zend: '8.0.2'
-    php: '5.6'
-    apache: '2.2'
+    zend: '9.0.0' 
+    php: '7.0' 
+    apache: '2.4'
 
   # Which webserver to use, can either be apache or nginx
   webserver: apache
@@ -16,32 +16,66 @@ zendserver:
   # separate users
   enable_itk: False
 
-  # Whether to use the nginx mainline repo or default stable
+  # Whether to use the nginx mainline (develop branch) repo or default stable
   nginx_mainline: False
 
   # Whether to bootstrap the Zend Server, otherwise you'll be
   # asked to do so when you login to the ZendServer admin page.
-  bootstrap: False
-
+  #bootstrap: False
+  bootstrap: True
+  
   # License details for ZendServer
   # This option is mandatory when 'Bootstrap' is True
   #
   #license:
   #  order: XXXX-XXXXX-XX
   #  serial: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  license:
+    order: XXXX-XXXXX-XX
+    serial: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX 
 
   # To enable automatic bootstrapping using development settings and a 30-day trial
   #bootstrap_dev: True
+  bootstrap_dev: False
 
   # Extensions can be managed:
   #enable_extensions:
   #  - imagick
   #  - pcntl
+  enable_extensions:
+    - mongodb 
 
   # And turned off
   #disable_extensions:
   #  - db2
 
+  # This is a stateful configuration, this will add plugins are on this list:
+  deploy_plugins:
+    - mongoDB
+      
+
+  # And removed  this has to be the name that is show in the zendserver management UI, 
+  #  it maybe different from the zip file name that was used to deploy the package
+  #remove_plugins:
+  #  - mongoDB
+
+
   # Directives to be set or modified
   #directives:
   #  - zray.zendserver_ui_url: "https://your.server.example.com:10082/ZendServer"
+
+
+  #Zend server cluster
+  cluster:
+    blueprint:
+      dbhost: 139.49.200.89
+      dbusername: admin
+      dbpassword: password
+      dbschema: zend
+    main_node:
+      name: zend0
+      ip: 139.49.200.123
+    add_nodes:
+      zend1:
+        ip: 139.49.200.127
+

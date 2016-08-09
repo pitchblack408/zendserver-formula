@@ -1,6 +1,6 @@
 {% set zendserver = salt['grains.filter_by']({
 	'trusty': {'version': { 'apache': '2.4' }},
-	'default': {'version': { 'apache': '2.2' }},
+	'default': {'version': { 'apache': '2.4' }},
 }, 
 grain='oscodename', 
 merge=salt['pillar.get']('zendserver:lookup')) %}

@@ -1,6 +1,5 @@
 {%- from "zendserver/map.jinja" import zendserver with context %}
 {%- set zend_version = salt['pillar.get']('zendserver:version:zend', '') %}
-{%- set zend_version_number = '' if salt['pillar.get']('zendserver:version:zend', '')=='' else salt['pillar.get']('zendserver:version:zend', '').split('.') %}
 {%- set apache_version = salt['pillar.get']('zendserver:version:apache') %}
 {%- set webserver = salt['pillar.get']('zendserver:webserver') %}
 
@@ -8,7 +7,7 @@
 zendserver_repo:
   pkgrepo.managed:
     - humanname: ZendServer PPA
-    {% if (webserver == 'apache' and apache_version == '2.4') or  zend_version_number >= 9 %}
+    {% if webserver == 'apache' and apache_version == '2.4' %}
     - name: deb http://repos.zend.com/zend-server/{{zend_version}}/deb_apache2.4 server non-free
     {% else %}
     - name: deb http://repos.zend.com/zend-server/{{zend_version}}/deb_ssl1.0 server non-free

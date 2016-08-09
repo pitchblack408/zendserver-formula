@@ -1,6 +1,7 @@
 # Include :download:`map file <map.jinja>` of OS-specific package names and
 # file paths. Values can be overridden using Pillar.
 {%- from "zendserver/map.jinja" import zendserver with context %}
+{%- set zend_version_number = '' if salt['pillar.get']('zendserver:version:zend', '')=='' else salt['pillar.get']('zendserver:version:zend', '').split('.') %}
 {%- set zend_admin_pass = salt['pillar.get']('zendserver:admin_password', 'changeme') %}
 {%- set php_version = salt['pillar.get']('zendserver:version:php', '5.5') %}
 {%- set webserver = salt['pillar.get']('zendserver:webserver', 'apache') %}
@@ -10,13 +11,23 @@
 {%- set zend_license_order = salt['pillar.get']('zendserver:license:order') %}
 {%- set zend_license_serial = salt['pillar.get']('zendserver:license:serial') %}
 
+
+
 # Include APT repositories
 include:
   - .repo.zendserver
 {%- if webserver == 'nginx' %}
   - .repo.nginx
+{%- endif %}
 
+{%- if webserver == 'nginx' %}
 # Install nginx and ensure its running
+apache2:
+  pkg:
+    - removed
+    - require:
+      - pkg: nginx
+
 nginx:
   pkg:
     - installed
@@ -25,10 +36,8 @@ nginx:
     - reload: True
     - watch:
       - pkg: nginx
-      - pkg: zendserver
     - require:
       - pkg: nginx
-      - pkg: zendserver
 {%- else %}
 # Install apache2 ensure its running
 apache2:
@@ -117,45 +126,63 @@ alternative-phpize:
     - group: adm
     - mode: 740
 
+/etc/zendserver/restart.sh:
+  file.managed:
+    - source: salt://zendserver/files/restart.sh
+    - user: root
+    - group: adm
+    - mode: 740
+
+
 # Bootstrap Zend-Server to prevent first-run wizard while accessing the admin panel
 {%- if bootstrap %}
+
 bootstrap-zs:
   cmd.run:
     - name: "/etc/zendserver/bootstrap-zs.sh {{ zend_admin_pass }} {{ zend_license_order }} {{ zend_license_serial }}"
+    - stateful: True
     - require:
       - cmd: alternative-php
-      - file: /etc/zendserver/bootstrap-zs.sh
-    - unless: test -e /etc/zendserver/zs-admin.txt
-{%- endif %}
+      - file: /etc/zendserver/bootstrap-zs.sh    
 
-{%- if bootstrap_dev %}
-bootstrap-zs-dev:
-  cmd.run:
-    - name: /etc/zendserver/bootstrap-zs.sh
-    - require:
-      - cmd: alternative-php
-      - file: /etc/zendserver/bootstrap-zs.sh
-    - unless: test -e /etc/zendserver/zs-admin.txt
-{%- endif %}
-
-{% if bootstrap or bootstrap_dev %}
 refresh-zs-grains:
   module.run:
     - name: saltutil.sync_grains
+
 {% endif %}
 
-#Moved down in case salt decides to run this before bootstrapping, can still be required as a dependency
 
-zs-admin:
-  file.managed:
-    - name: /etc/zendserver/zs-admin.txt
-    - contents: {{ zend_admin_pass }}
-    - require:
-      - file: /etc/zendserver
-    - unless: test -e /etc/zendserver/zs-admin.txt
-  grains.present:
-    - name: zend-server:api:enabled
-    - value:
+
+
+#This currently doesn't exists in the shell script
+#{%- if bootstrap_dev %}
+#bootstrap-zs-dev:
+#  cmd.run:
+#    - name: /etc/zendserver/bootstrap-zs.sh
+#    - require:
+#      - cmd: alternative-php
+#      - file: /etc/zendserver/bootstrap-zs.sh
+#    - unless: test -e /etc/zendserver/zs-admin.txt
+#{%- endif %}
+
+#{% if bootstrap or bootstrap_dev %}
+#refresh-zs-grains:
+#  module.run:
+#    - name: saltutil.sync_grains
+#{% endif %}
+
+#This is a flag that the user placed on the server to see if the bootstrap-zs
+# command should run again, new script attempts bootstrap and returns state
+#zs-admin:
+#  file.managed:
+#    - name: /etc/zendserver/zs-admin.txt
+#    - contents: {{ zend_admin_pass }}
+#    - require:
+#      - file: /etc/zendserver
+#    - unless: test -e /etc/zendserver/zs-admin.txt
+#  grains.present:
+#    - name: zend-server:api:enabled
+#    - value:
 
 {%- if webserver == 'nginx' %}
 /etc/init.d/php-fpm:
